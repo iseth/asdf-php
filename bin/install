@@ -28,7 +28,7 @@ install_php() {
     local krb5_path=$(homebrew_package_path krb5)
     local libedit_path=$(homebrew_package_path libedit)
     local libxml2_path=$(homebrew_package_path libxml2)
-    local openssl_path=$(homebrew_package_path openssl)
+    local openssl_path=$(homebrew_package_path openssl@1.1)
 
     if [ -n "$bison_path" ]; then
       export "PATH=${bison_path}/bin:${PATH}"
@@ -168,7 +168,27 @@ construct_configure_options() {
   if [ "${PHP_WITHOUT_PDO_PGSQL:-no}" != "no" ]; then
     configure_options="$configure_options"
   else
-    configure_options="$configure_options --with-pdo-pgsql"
+    local operating_system=$(uname -a)
+
+    if [[ $operating_system =~ "Darwin" ]]; then
+      exit_if_homebrew_not_installed
+
+      local libpq_path=$(homebrew_package_path libpq)
+
+      if [ -n "$libpq_path" ]; then
+        configure_options="$configure_options --with-pdo-pgsql=$libpq_path"
+      else
+        export ASDF_PKG_MISSING="$ASDF_PKG_MISSING libpq"
+      fi
+    else
+      configure_options="$configure_options --with-pdo-pgsql"
+    fi
+  fi
+
+  if [ "${PHP_WITHOUT_PCRE_JIT:-no}" != "no" ]; then
+    configure_options="$configure_options"
+  else
+    configure_options="$configure_options --without-pcre-jit"
   fi
 
   echo "$configure_options"
@@ -210,7 +230,7 @@ os_based_configure_options() {
     local libpng_path=$(homebrew_package_path libpng)
     local libxml2_path=$(homebrew_package_path libxml2)
     local libzip_path=$(homebrew_package_path libzip)
-    local openssl_path=$(homebrew_package_path openssl)
+    local openssl_path=$(homebrew_package_path openssl@1.1)
     local readline_path=$(homebrew_package_path readline)
     local webp_path=$(homebrew_package_path webp)
     local zlib_path=$(homebrew_package_path zlib)
